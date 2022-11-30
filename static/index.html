@@ -45,16 +45,27 @@ debug("Test");
 world = {};
 
 //XXX: TODO Make this prettier!
+// used assignment 4 code
 function drawCircle(context,entity) {
     with(context) {
-        beginPath();                
+        beginPath();              
         lineWidth = 3;
         var x = entity["x"];
         var y = entity["y"];
+        //Raymond Zhou, https://stackoverflow.com/questions/16494262/how-to-draw-a-circle-with-centered-fadeing-out-gradients-with-html5-canvas
+        innerRadius = ((entity["radius"])?entity["radius"]:50)/2;
+        outerRadius = ((entity["radius"])?entity["radius"]:50)+10;
+
+        var grd = createRadialGradient(x, y, innerRadius, x, y, outerRadius);
+        grd.addColorStop(0, entity["colour"]);
+        grd.addColorStop(1, "white");
         //moveTo(x,y);
-        fillStyle = entity["colour"];
-        strokeStyle = fillStyle;
+        
+        strokeStyle = grd;
         arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
+
+        fillStyle = grd;
+        fill();
         stroke();                                
     }
 }
@@ -125,6 +136,7 @@ function addEntity(entity, data) {
     world[entity] = data;
     drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just modified!
+    
 }
 var counter = 0;
 function addEntityWithoutName(data) {
@@ -230,16 +242,17 @@ mouse = (function() {
 
 // Add the application specific mouse listeners!
 //XXX: TODO Make these prettier!
+// used assignment 4 code
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'blue'});
+    addEntityWithoutName({'x':x,'y':y,'colour':"rgb(255, 165, 122)"});
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'red'});
+    addEntityWithoutName({'x':x,'y':y,'colour':"rgb(100, 164, 174)"});
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'green',
+    addEntityWithoutName({'x':x,'y':y,'colour':"rgb(0, 101, 160)",
                           'radius':10});
 });
 
@@ -254,6 +267,7 @@ function wsSetup() {
     socket = new WebSocket(url);
     socket.onopen = function() {
         //XXX: TODO What are you going to do here?
+
     };
     socket.onerror = function(msg) {
         debug("WebSocket Error:" + msg.data);
@@ -261,7 +275,12 @@ function wsSetup() {
     socket.onmessage = function(msg) {  
         try {
             debug("WebSocket Recv:" + msg.data);
-            //XXX: TODO What are you going to do here?            
+            try {
+                var message = JSON.parse(msg.data);
+                addMessage(message["msg"]);
+            } catch (e) {
+                alert("socket on message: " + e);
+            }        
         } catch (e) {
             alert("socket on message: " + e);
         }
