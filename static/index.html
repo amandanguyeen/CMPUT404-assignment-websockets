@@ -46,6 +46,7 @@ world = {};
 
 //XXX: TODO Make this prettier!
 // used assignment 4 code
+//https://github.com/amandanguyeen/CMPUT404-assignment-ajax
 function drawCircle(context,entity) {
     with(context) {
         beginPath();              
@@ -132,12 +133,16 @@ function getPosition(e) {
 	}
 }
 
+// pimvdb, Accessed Nov 30, https://stackoverflow.com/questions/11181577/websocket-send-parameter
 function addEntity(entity, data) {
     world[entity] = data;
     drawNextFrame(); // (but should we?)
-    //XXX: Send a XHTML Request that updates the entity you just modified!
-    
+    json_dict = {
+        [entity]: data
+    }
+    socket.send(JSON.stringify(json_dict))
 }
+
 var counter = 0;
 function addEntityWithoutName(data) {
     var name = "X"+(counter++)%100;
@@ -241,8 +246,9 @@ mouse = (function() {
 })();
 
 // Add the application specific mouse listeners!
-//XXX: TODO Make these prettier!
+
 // used assignment 4 code
+//https://github.com/amandanguyeen/CMPUT404-assignment-ajax
 mouse.mousedowners.push(function(x,y,clicked,e) {
     addEntityWithoutName({'x':x,'y':y,'colour':"rgb(255, 165, 122)"});
 });
@@ -261,26 +267,41 @@ function update() {
     drawFrame();
 }
 
-
-function wsSetup() {
+// https://stackoverflow.com/questions/34913675/how-to-iterate-keys-values-in-javascript
+function wsSetup(){
     var url = "ws://"+host+"/subscribe";   
+    var worldUrl = "http://" + host + "/world";
     socket = new WebSocket(url);
     socket.onopen = function() {
-        //XXX: TODO What are you going to do here?
-
+        // 1. Get the current state of the world
+        // 2. Update our world dictionary to match what the world is 
+        debug("Websocket has opened")
+        fetch(worldUrl)
+        .then((response) => {
+            response.json()
+            .then((data) => {
+                for (let [key, value] of Object.entries(data)) {
+                world[key] = value;
+              }
+            });
+        });
     };
+
     socket.onerror = function(msg) {
         debug("WebSocket Error:" + msg.data);
     };
+
     socket.onmessage = function(msg) {  
+        // 1. websocket is telling us there is new data
+        // 2. must add that new data to our world
         try {
             debug("WebSocket Recv:" + msg.data);
-            try {
-                var message = JSON.parse(msg.data);
-                addMessage(message["msg"]);
-            } catch (e) {
-                alert("socket on message: " + e);
-            }        
+            const data = JSON.parse(msg.data)
+            
+            for (let [key , value] of Object.entries(data)) {
+                world[key] = value;
+                drawNextFrame();
+            }
         } catch (e) {
             alert("socket on message: " + e);
         }
@@ -288,9 +309,6 @@ function wsSetup() {
 }
 
 wsSetup();
-
-
-
 
 // 30 frames per second
 setInterval( update, 1000/30.0);

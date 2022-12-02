@@ -85,7 +85,9 @@ def set_listener( entity, data ):
     ''' do something with the update ! '''
 
 myWorld.add_set_listener( set_listener )
-        
+
+# https://stackoverflow.com/questions/14343812/redirecting-to-url-in-flask
+# Xavier Combelle Accessed November 30, 
 @app.route('/')
 def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
@@ -110,6 +112,7 @@ def read_ws(ws,client):
 def subscribe_socket(ws):
     '''Fufill the websocket URL of /subscribe, every update notify the
        websocket and read updates from the websocket '''
+    'Abram Hindle, Accessed Nov 30, https://github.com/abramhindle/WebSocketsExamples/blob/master/chat.py'
     client = Client()
     clients.append(client)
     g = gevent.spawn( read_ws, ws, client )    
@@ -137,7 +140,9 @@ def flask_post_json():
     else:
         return json.loads(request.form.keys()[0])
 
-# everything was taken from my assignment 4
+
+# used assignment 4 code
+# https://github.com/amandanguyeen/CMPUT404-assignment-ajax
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
